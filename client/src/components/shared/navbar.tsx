@@ -40,7 +40,7 @@ const Navbar = () => {
           {/* Auth Buttons */}
           <div className="hidden md:flex space-x-4">
             <Link
-              href="/login"
+              href="/auth/signin"
               className="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-100 transition"
             >
               Login
