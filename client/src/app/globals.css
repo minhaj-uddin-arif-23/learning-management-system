@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 /* @tailwind utilities; */
+html, body, :root{
+  height:100%;
+}
 
 @custom-variant dark (&:is(.dark *));
 

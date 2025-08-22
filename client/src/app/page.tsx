@@ -1,7 +1,15 @@
-import Navbar from "@/src/components/shared/navbar";
+"use client";
+import {SessionProvider} from "next-auth/react"
+import UserButton from "../component/user-button";
 
-export default function Home() {
-  return <div>
-   <Navbar />
-  </div>;
-}
+const Home = () => {
+  return (
+    <div>
+      <SessionProvider>
+        <UserButton />
+      </SessionProvider>
+    </div>
+  );
+};
+
+export default Home;

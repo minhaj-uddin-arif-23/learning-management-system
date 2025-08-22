@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { SessionProvider } from "next-auth/react";
+import { Toaster } from "sonner";
 const inter = Inter({
   weight: "400",
   subsets: ["latin"],
@@ -18,7 +20,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} antialiased ` } cz-shortcut-listen="true">{children}</body>
+      <body
+        className={`${inter.className} antialiased `}
+        cz-shortcut-listen="true"
+      >
+        <Toaster />
+       {children}
+      </body>
     </html>
   );
 }

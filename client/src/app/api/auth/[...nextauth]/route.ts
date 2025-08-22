@@ -1,85 +1,110 @@
-import NextAuth, { NextAuthOptions, User, Session } from 'next-auth';
-import CredentialsProvider from 'next-auth/providers/credentials';
-import axios from 'axios';
+// src/app/api/auth/[...nextauth]/route.ts
+import NextAuth, { NextAuthOptions } from "next-auth";
+import User from "../../../../../src/models/user";
+import connectToDatabase from "../../../../lib/mongodb";
+import bcrypt from "bcryptjs";
+import CredentialsProvider from "next-auth/providers/credentials";
+import Github from "next-auth/providers/github";
 
-// Extend the default User type to include role and token
-interface CustomUser extends User {
-  id: string;
-  username: string;
-  role: 'admin' | 'user';
-  token: string;
-}
-
-// Extend the Session type to include user properties using module augmentation
-import { DefaultSession } from 'next-auth';
-
-declare module 'next-auth' {
+// Extend the default User type to include role and id
+declare module "next-auth" {
+  interface User {
+    id: string;
+    role?: "admin" | "user";
+  }
   interface Session {
-    user: {
-      id: string;
-      username: string;
-      role: 'admin' | 'user';
-      accessToken: string;
-    } & DefaultSession['user'];
+    user: User & {
+      role?: "admin" | "user";
+    };
+  }
+  interface JWT {
+    id: string;
+    role?: "admin" | "user";
   }
 }
 
-export const authOptions: NextAuthOptions = {
+const handler = NextAuth({
+  session: {
+    strategy: "jwt",
+  },
   providers: [
+    Github({
+      clientId: process.env.GITHUB_ID as string,
+      clientSecret: process.env.GITHUB_SECRET as string,
+    }),
     CredentialsProvider({
-      name: 'Credentials',
+      name: "Credentials",
       credentials: {
-        username: { label: 'Username', type: 'text' },
-        password: { label: 'Password', type: 'password' },
-        role: { label: 'Role', type: 'select', options: ['user', 'admin'] },
+        email: {},
+        password: {},
       },
-      async authorize(credentials, req) {
+      async authorize(credentials) {
         try {
-          const isRegister = req?.body?.isRegister === 'true';
-          const endpoint = isRegister ? '/auth/register' : '/auth/login';
-          const body = isRegister
-            ? { username: credentials?.username, password: credentials?.password, role: credentials?.role }
-            : { username: credentials?.username, password: credentials?.password };
-
-          const res = await axios.post(`http://localhost:5000/api${endpoint}`, body);
-          const { user, token } = res.data;
-
-          if (user) {
-            return { id: user.id, username: user.username, role: user.role, token } as CustomUser;
+          await connectToDatabase();
+          const user = await User.findOne({ email: credentials?.email });
+          if (!user) {
+            throw new Error("User not found");
           }
-          return null;
-        } catch (err) {
-          console.error('Authorize error:', err);
+          const isValidPassword = await bcrypt.compare(
+            credentials?.password ?? "",
+            user.password as string
+          );
+          if (!isValidPassword) {
+            throw new Error("Invalid password");
+          }
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role, // Fetch role from database
+          } as const;
+        } catch (error) {
+          console.error("Authorization error:", error);
           return null;
         }
       },
     }),
   ],
   callbacks: {
+    async signIn({ account, profile }) {
+      if (account?.provider === "github") {
+        await connectToDatabase();
+        const existingUser = await User.findOne({ email: profile?.email });
+        if (!existingUser) {
+          await User.create({
+            name: profile?.name,
+            email: profile?.email,
+            // Role will default to 'user' from schema
+          });
+        }
+      }
+      return true;
+    },
     async jwt({ token, user }) {
       if (user) {
-        const customUser = user as CustomUser;
-        token.id = customUser.id;
-        token.username = customUser.username;
-        token.role = customUser.role;
-        token.accessToken = customUser.token;
+        token.id = user.id;
+        token.email = user.email;
+        token.role = user.role; // Role from database
       }
       return token;
     },
     async session({ session, token }) {
-      session.user = {
-        id: token.id as string,
-        username: token.username as string,
-        role: token.role as 'admin' | 'user',
-        accessToken: token.accessToken as string,
-      };
+      if (token) {
+        session.user = {
+          id: token.id as string,
+          email: token.email,
+          name: token.name,
+          role: token.role as "admin" | "user", // Role from token
+          image: token.picture,
+        };
+      }
       return session;
     },
   },
   pages: {
-    signIn: '/auth/signin',
+    signIn: "/sign-in",
   },
-};
+  secret: process.env.NEXTAUTH_SECRET,
+} as NextAuthOptions);
 
-const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };
