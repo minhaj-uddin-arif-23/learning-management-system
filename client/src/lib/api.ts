@@ -9,10 +9,13 @@ export const getCourses = async () => {
   return response.data;
 };
 
-export const createCourse = async (course: Omit<Course, '_id'>) => {
-  const response = await axios.post<Course>(`${API_BASE_URL}/courses`, course);
+export const createCourse = async (courseData: FormData) => {
+  const response = await axios.post(`${API_BASE_URL}/courses/addCourse`, courseData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
   return response.data;
 };
+
 
 export const updateCourse = async (id: string, course: Partial<Course>) => {
   const response = await axios.put<Course>(`${API_BASE_URL}/courses/${id}`, course);

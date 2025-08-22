@@ -11,7 +11,7 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <p>Create, edit, or delete courses.</p>
-            <a href="/admin/courses" className="text-blue-600 hover:underline">
+            <a href="/course" className="text-blue-600 hover:underline">
               Go to Courses
             </a>
           </CardContent>
