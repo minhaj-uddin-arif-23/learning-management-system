@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { SessionProvider } from "next-auth/react";
 import { Toaster } from "sonner";
+import { Providers } from "./providers";
 const inter = Inter({
   weight: "400",
   subsets: ["latin"],
@@ -25,7 +25,7 @@ export default function RootLayout({
         cz-shortcut-listen="true"
       >
         <Toaster />
-       {children}
+      <Providers>{children}</Providers> 
       </body>
     </html>
   );

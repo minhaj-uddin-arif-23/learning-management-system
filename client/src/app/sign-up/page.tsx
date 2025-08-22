@@ -1,3 +1,4 @@
+// src/app/sign-up/page.tsx
 "use client";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,7 +25,6 @@ const SignUp = () => {
     email: "",
     password: "",
     confirmPassword: "",
-    role: "user", // Default role, can be a dropdown if needed
   });
   const [pending, setPending] = useState(false);
   const [error, setError] = useState(null);
@@ -113,16 +113,6 @@ const SignUp = () => {
               }
               required
             />
-            {/* Optional role selection (uncomment if needed) */}
-            {/* <select
-              value={form.role}
-              onChange={(e) => setForm({ ...form, role: e.target.value as 'admin' | 'user' })}
-              disabled={pending}
-              className="w-full p-2 border rounded"
-            >
-              <option value="user">User</option>
-              <option value="admin">Admin</option>
-            </select> */}
             <Button className="w-full" size="lg" disabled={pending}>
               continue
             </Button>

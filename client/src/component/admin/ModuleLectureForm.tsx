@@ -41,7 +41,7 @@ export default function ModuleLectureForm({ type, courseId }: ModuleLectureFormP
     if (formData.type === 'module') {
       await createModule({ ...formData, courseId } as Omit<Module, '_id'>);
     } else {
-      await createLecture({ ...formData, courseId } as Omit<lecture, '_id'>);
+      await createLecture({ ...formData, courseId } as unknown as Omit<lecture, '_id'>);
     }
     window.location.reload();
   };

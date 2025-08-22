@@ -22,7 +22,7 @@ export default function CourseList() {
       <h1 className="text-3xl font-bold">Courses</h1>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {courses.map((course) => (
-          <Link key={course._id} href={`/user/courses/${course._id}`}>
+          <Link key={course._id} href={`/courses/${course._id}`}>
             <Card>
               <CardHeader>
                 <CardTitle>{course.title}</CardTitle>

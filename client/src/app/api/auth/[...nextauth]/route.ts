@@ -1,7 +1,7 @@
-// src/app/api/auth/[...nextauth]/route.ts
+
 import NextAuth, { NextAuthOptions } from "next-auth";
-import User from "../../../../../src/models/user";
-import connectToDatabase from "../../../../lib/mongodb";
+import User from "../../../../models/user"; // Use absolute import with @/
+import connectToDatabase from "@/lib/mongodb"; // Use absolute import with @/
 import bcrypt from "bcryptjs";
 import CredentialsProvider from "next-auth/providers/credentials";
 import Github from "next-auth/providers/github";
@@ -9,7 +9,7 @@ import Github from "next-auth/providers/github";
 // Extend the default User type to include role and id
 declare module "next-auth" {
   interface User {
-    id: string;
+    id: string; // Use _id from MongoDB
     role?: "admin" | "user";
   }
   interface Session {
@@ -18,12 +18,13 @@ declare module "next-auth" {
     };
   }
   interface JWT {
-    id: string;
+    id: string; // Use _id from MongoDB
     role?: "admin" | "user";
   }
 }
 
-const handler = NextAuth({
+// Define authOptions explicitly
+const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
@@ -53,10 +54,10 @@ const handler = NextAuth({
             throw new Error("Invalid password");
           }
           return {
-            id: user.id,
+            id: (user as { _id: { toString: () => string } })._id.toString(),  // Use _id as id
             name: user.name,
             email: user.email,
-            role: user.role, // Fetch role from database
+            role: user.role,
           } as const;
         } catch (error) {
           console.error("Authorization error:", error);
@@ -74,7 +75,7 @@ const handler = NextAuth({
           await User.create({
             name: profile?.name,
             email: profile?.email,
-            // Role will default to 'user' from schema
+            // Role defaults to 'user' from schema
           });
         }
       }
@@ -82,19 +83,19 @@ const handler = NextAuth({
     },
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
+        token.id = user.id; // _id as string
         token.email = user.email;
-        token.role = user.role; // Role from database
+        token.role = user.role;
       }
       return token;
     },
     async session({ session, token }) {
       if (token) {
         session.user = {
-          id: token.id as string,
+          id: token.id as string, // _id as string
           email: token.email,
           name: token.name,
-          role: token.role as "admin" | "user", // Role from token
+          role: token.role as "admin" | "user",
           image: token.picture,
         };
       }
@@ -105,6 +106,11 @@ const handler = NextAuth({
     signIn: "/sign-in",
   },
   secret: process.env.NEXTAUTH_SECRET,
-} as NextAuthOptions);
+};
 
+// Export authOptions
+export { authOptions };
+
+// Export handler for NextAuth routes
+const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };
